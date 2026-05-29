@@ -9,8 +9,7 @@ defmodule ChirpWeb.ConfirmLiveTest do
     attrs =
       Map.merge(
         %{
-          name: "Zahnbürstenkopf",
-          verb: "gewechselt",
+          name: "Zahnbürstenkopf wechseln",
           base_interval_seconds: 60,
           ntfy_topic: "test-topic",
           next_fire_at:
@@ -29,8 +28,8 @@ defmodule ChirpWeb.ConfirmLiveTest do
     {:ok, _view, html} = live(conn, ~p"/t/#{task.token}")
 
     assert html =~ "Zahnbürstenkopf"
-    assert html =~ "gewechselt"
     assert html =~ "Bestätigen"
+    assert html =~ "+1 Stunde"
   end
 
   test "404-ish view for unknown token", %{conn: conn} do

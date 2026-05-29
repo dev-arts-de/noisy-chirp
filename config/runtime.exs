@@ -23,12 +23,24 @@ end
 config :noisy_chirp, ChirpWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+writer_module =
+  case System.get_env("CHIRP_WRITER", "anthropic") |> String.downcase() do
+    "ollama" -> Chirp.AI.Ollama
+    "none" -> Chirp.AI.Disabled
+    _ -> Chirp.AI.Anthropic
+  end
+
 config :noisy_chirp,
   ntfy_base_url: System.get_env("NTFY_BASE_URL", "https://ntfy.sh"),
   public_base_url: System.get_env("PUBLIC_BASE_URL", "http://localhost:4000"),
   seed_on_boot: System.get_env("SEED_ON_BOOT", "false") in ~w(true 1 yes),
   admin_password: System.get_env("ADMIN_PASSWORD") || "",
-  default_ntfy_topic: System.get_env("NTFY_TOPIC")
+  default_ntfy_topic: System.get_env("NTFY_TOPIC"),
+  chirp_writer: writer_module,
+  anthropic_api_key: System.get_env("ANTHROPIC_API_KEY"),
+  anthropic_model: System.get_env("ANTHROPIC_MODEL", "claude-haiku-4-5"),
+  ollama_base_url: System.get_env("OLLAMA_BASE_URL", "http://localhost:11434"),
+  ollama_model: System.get_env("OLLAMA_MODEL", "qwen2.5:1.5b")
 
 if config_env() == :prod do
   database_path =

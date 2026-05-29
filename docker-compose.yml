@@ -9,6 +9,11 @@ services:
       NTFY_BASE_URL: ${NTFY_BASE_URL:-https://ntfy.sh}
       NTFY_TOPIC: ${NTFY_TOPIC}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CHIRP_WRITER: ${CHIRP_WRITER:-anthropic}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-4-5}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:1.5b}
       DATABASE_PATH: /data/noisy_chirp.db
       SEED_ON_BOOT: "true"
       PORT: "4000"

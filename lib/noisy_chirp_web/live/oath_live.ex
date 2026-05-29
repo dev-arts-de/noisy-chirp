@@ -76,8 +76,8 @@ defmodule ChirpWeb.OathLive do
     <div class="rounded-2xl border border-red-500/40 bg-black/40 backdrop-blur p-8 shadow-2xl text-center space-y-6">
       <span class="text-5xl block">🩸</span>
       <h1 class="text-2xl font-bold leading-snug">
-        Schwöre mir,<br /> dass du den <span class="text-red-300">{@task.name}</span>
-        <br /> wirklich {@task.verb} hast!!
+        Schwöre mir,<br /> dass du das wirklich erledigt hast:<br />
+        <span class="text-red-300">{@task.name}</span>!!
       </h1>
 
       <form phx-submit="swear" class="space-y-6">

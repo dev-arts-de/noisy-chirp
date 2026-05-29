@@ -185,6 +185,95 @@ defmodule Chirp.Reminders do
     |> Repo.update()
   end
 
+  @doc """
+  Admin edit — same as `update_task/2` but also tells the engine to
+  re-plan with the new state.
+  """
+  def update_task_and_wake(%Task{} = task, attrs) do
+    with {:ok, updated} <- update_task(task, attrs) do
+      wake(updated)
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Snooze: push `next_fire_at` forward by `seconds`, reset the escalation,
+  release back to calm. Does *not* touch `lie_score`.
+  """
+  def snooze_task(%Task{} = task, seconds) when is_integer(seconds) and seconds > 0 do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    next = DateTime.add(now, seconds, :second)
+
+    with {:ok, updated} <-
+           update_task(task, %{
+             state: "calm",
+             reminder_count: 0,
+             next_fire_at: next
+           }) do
+      wake(updated)
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Snooze to "tomorrow morning" at a wall-clock hour in the app's timezone.
+  Defaults to 08:00.
+  """
+  def snooze_until_tomorrow(%Task{} = task, hour \\ 8) when hour in 0..23 do
+    tz = Application.get_env(:noisy_chirp, :timezone, "Europe/Berlin")
+    now = DateTime.utc_now()
+
+    now_local = DateTime.shift_zone!(now, tz)
+
+    tomorrow_local =
+      now_local
+      |> DateTime.add(86_400, :second)
+      |> Map.merge(%{hour: hour, minute: 0, second: 0, microsecond: {0, 0}})
+
+    target_utc = DateTime.shift_zone!(tomorrow_local, "Etc/UTC")
+    seconds = DateTime.diff(target_utc, now, :second) |> max(60)
+
+    snooze_task(task, seconds)
+  end
+
+  @doc "Pause: deactivate and stop the engine process."
+  def pause_task(%Task{} = task) do
+    with {:ok, updated} <- update_task(task, %{active: false}) do
+      stop_engine(updated)
+      {:ok, updated}
+    end
+  end
+
+  @doc "Resume: re-activate and (re-)start the engine process."
+  def resume_task(%Task{} = task) do
+    with {:ok, updated} <- update_task(task, %{active: true}) do
+      start_engine(updated)
+      {:ok, updated}
+    end
+  end
+
+  @doc "Delete: stop engine then remove from DB. Events cascade."
+  def delete_task(%Task{} = task) do
+    stop_engine(task)
+    Repo.delete(task)
+  end
+
+  defp stop_engine(%Task{id: id}) do
+    if Code.ensure_loaded?(Chirp.Engine) and function_exported?(Chirp.Engine, :stop_task, 1) do
+      Chirp.Engine.stop_task(id)
+    end
+
+    :ok
+  end
+
+  defp start_engine(%Task{} = task) do
+    if Code.ensure_loaded?(Chirp.Engine) and function_exported?(Chirp.Engine, :start_task, 1) do
+      Chirp.Engine.start_task(task)
+    end
+
+    :ok
+  end
+
   # ----- Internals -----
 
   defp latency_ms(nil, _now), do: nil

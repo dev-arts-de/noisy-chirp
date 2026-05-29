@@ -39,6 +39,7 @@ defmodule ChirpWeb.Router do
       on_mount: [{ChirpWeb.Auth, :ensure_authenticated}] do
       live "/", DashboardLive, :index
       live "/new", NewTaskLive, :new
+      live "/:id/edit", EditTaskLive, :edit
     end
   end
 

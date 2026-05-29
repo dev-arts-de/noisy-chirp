@@ -51,14 +51,15 @@ defmodule Chirp.Engine.Escalation do
   def title(_), do: "noisy-chirp"
 
   @doc """
-  Renders the German escalation text. Takes the task's description (e.g.
-  "Zahnbürstenkopf wechseln") and the chirp count.
+  Bird-themed fallback German escalation text. Used when the LLM
+  (`Chirp.AI.ChirpWriter`) is unavailable, errors out, or is disabled.
+  Takes the task description and the chirp count.
   """
-  def text(1, desc), do: "🐦 #{desc}?"
-  def text(2, desc), do: "Hey. #{desc}. Du weißt schon."
-  def text(3, desc), do: "Zum dritten Mal: #{desc}. 🙃"
-  def text(4, desc), do: "#{desc}. JETZT."
-  def text(5, desc), do: "Ich höre nicht auf. #{desc}. 🚨"
+  def text(1, desc), do: "*piep* Erinnerung: #{desc}."
+  def text(2, desc), do: "*chirp chirp* #{desc}? *pickpickpick*"
+  def text(3, desc), do: "Ich piep dich jetzt zum dritten Mal an — #{desc}."
+  def text(4, desc), do: "*sträubt Federn* #{desc}. JETZT."
+  def text(5, desc), do: "*panisches Flügelflattern* #{desc}! 🚨"
   def text(n, desc) when n >= 6, do: "chirp chirp chirp #{desc} 💀"
 
   @doc """

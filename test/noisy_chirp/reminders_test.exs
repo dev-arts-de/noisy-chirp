@@ -119,4 +119,57 @@ defmodule Chirp.RemindersTest do
       assert event.priority == 4
     end
   end
+
+  describe "snooze_task/2" do
+    test "pushes next_fire_at forward, resets escalation" do
+      task =
+        create_task!()
+        |> Ecto.Changeset.change(%{state: "nagging", reminder_count: 3})
+        |> Chirp.Repo.update!()
+
+      now = DateTime.utc_now()
+      {:ok, snoozed} = Reminders.snooze_task(task, 3600)
+
+      assert snoozed.state == "calm"
+      assert snoozed.reminder_count == 0
+      assert DateTime.diff(snoozed.next_fire_at, now, :second) >= 3595
+    end
+  end
+
+  describe "snooze_until_tomorrow/2" do
+    test "schedules to next morning at the given hour" do
+      task = create_task!()
+      {:ok, snoozed} = Reminders.snooze_until_tomorrow(task, 8)
+
+      # In the worst case (right after 8 AM), we get ~24h. In the best,
+      # at ~7:59 AM, just under an hour. Always at least 1 minute.
+      diff = DateTime.diff(snoozed.next_fire_at, DateTime.utc_now(), :second)
+      assert diff >= 60
+      # Worst case: it's just after 08:00 local → ~24h. Best case: just
+      # before 08:00 → ~minutes. Allow up to 36h to be safe across DST.
+      assert diff <= 36 * 3600
+    end
+  end
+
+  describe "pause_task/1 + resume_task/1" do
+    test "toggles active flag" do
+      task = create_task!()
+      assert task.active
+
+      {:ok, paused} = Reminders.pause_task(task)
+      refute paused.active
+
+      {:ok, resumed} = Reminders.resume_task(paused)
+      assert resumed.active
+    end
+  end
+
+  describe "delete_task/1" do
+    test "removes the task" do
+      task = create_task!()
+      {:ok, _} = Reminders.delete_task(task)
+
+      assert Reminders.get_task_by_token(task.token) == nil
+    end
+  end
 end

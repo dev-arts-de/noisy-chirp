@@ -97,18 +97,29 @@ defmodule Chirp.Engine.TaskServer do
   end
 
   defp dispatch(task, n) do
-    rendered = Escalation.render(n, task.name)
+    message = chirp_text(task, n)
 
     Notifier.publish(task.ntfy_topic,
-      title: rendered.title,
-      message: rendered.message,
-      priority: rendered.priority,
-      tags: rendered.tags,
+      title: Escalation.title(n),
+      message: message,
+      priority: Escalation.priority(n),
+      tags: Escalation.tags(n),
       click: click_url(task)
     )
   rescue
     e ->
       Logger.warning("dispatch crashed for task=#{task.id}: #{Exception.message(e)}")
+  end
+
+  defp chirp_text(task, n) do
+    case Chirp.AI.write(task.name, n) do
+      {:ok, text} ->
+        text
+
+      {:error, reason} ->
+        Logger.debug("AI text fallback for task=#{task.id}: #{inspect(reason)}")
+        Escalation.text(n, task.name)
+    end
   end
 
   defp click_url(task) do

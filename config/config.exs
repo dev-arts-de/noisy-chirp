@@ -13,7 +13,9 @@ config :noisy_chirp,
   generators: [timestamp_type: :utc_datetime],
   ntfy_base_url: "https://ntfy.sh",
   public_base_url: "http://localhost:4000",
-  notifier: Chirp.Ntfy
+  notifier: Chirp.Ntfy,
+  chirp_writer: Chirp.AI.Anthropic,
+  anthropic_model: "claude-haiku-4-5"
 
 # Configure the endpoint
 config :noisy_chirp, ChirpWeb.Endpoint,

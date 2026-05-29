@@ -22,7 +22,9 @@ config :noisy_chirp,
   notifier: Chirp.TestNotifier,
   engine_autostart: false,
   ntfy_base_url: "http://test.invalid",
-  public_base_url: "http://test.invalid"
+  public_base_url: "http://test.invalid",
+  chirp_writer: Chirp.AI.Disabled,
+  admin_password: "test"
 
 # Print only warnings and errors during test
 config :logger, level: :warning

@@ -1,23 +1,32 @@
-defmodule ChirpWeb.NewTaskLive do
+defmodule ChirpWeb.EditTaskLive do
   @moduledoc """
-  Admin form to create a new reminder task. Three fields:
-
-    * Beschreibung
-    * Erste Erinnerung (datetime-local)
-    * Zyklus (Preset-Select; "custom" reveals a days input)
+  Admin edit form for an existing task. Pre-filled. Submits via
+  `Reminders.update_task_and_wake/2` so the engine re-plans.
   """
   use ChirpWeb, :live_view
 
   alias Chirp.{Cycles, Reminders}
 
   @impl true
-  def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket,
-       page_title: "Neuer Chirp",
-       form: empty_form(),
-       error: nil
-     )}
+  def mount(%{"id" => id}, _session, socket) do
+    case Integer.parse(id) do
+      {task_id, ""} ->
+        task = Reminders.get_task!(task_id)
+
+        {:ok,
+         assign(socket,
+           page_title: "Chirp bearbeiten",
+           task: task,
+           form: form_for(task),
+           error: nil
+         )}
+
+      _ ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Task nicht gefunden.")
+         |> push_navigate(to: ~p"/admin")}
+    end
   end
 
   @impl true
@@ -28,11 +37,11 @@ defmodule ChirpWeb.NewTaskLive do
   def handle_event("save", %{"task" => params}, socket) do
     case build_attrs(params) do
       {:ok, attrs} ->
-        case Reminders.create_task(attrs) do
-          {:ok, _task} ->
+        case Reminders.update_task_and_wake(socket.assigns.task, attrs) do
+          {:ok, _} ->
             {:noreply,
              socket
-             |> put_flash(:info, "Chirp angelegt.")
+             |> put_flash(:info, "Geändert.")
              |> push_navigate(to: ~p"/admin")}
 
           {:error, changeset} ->
@@ -44,14 +53,20 @@ defmodule ChirpWeb.NewTaskLive do
     end
   end
 
-  # ---- Form helpers ----
+  # ---- Form ----
 
-  defp empty_form do
+  defp form_for(%{base_interval_seconds: seconds} = task) do
+    {cycle, custom_days} =
+      case Cycles.from_seconds(seconds) do
+        {:preset, key} -> {key, "30"}
+        {:custom, days} -> {"custom", Integer.to_string(days)}
+      end
+
     %{
-      "description" => "",
-      "first_fire_local" => ChirpWeb.TaskForm.default_first_fire(),
-      "cycle" => "bimonthly",
-      "custom_days" => "60"
+      "description" => task.name,
+      "first_fire_local" => ChirpWeb.TaskForm.datetime_to_local_input(task.next_fire_at),
+      "cycle" => cycle,
+      "custom_days" => custom_days
     }
   end
 
@@ -65,13 +80,11 @@ defmodule ChirpWeb.NewTaskLive do
       {:ok,
        %{
          name: description,
-         verb: "",
          base_interval_seconds: interval,
-         ntfy_topic: ChirpWeb.TaskForm.default_topic(),
          next_fire_at: DateTime.truncate(first_fire, :second),
+         # Editing implies a fresh start — back to calm.
          state: "calm",
-         reminder_count: 0,
-         active: true
+         reminder_count: 0
        }}
     end
   end
@@ -91,7 +104,7 @@ defmodule ChirpWeb.NewTaskLive do
     <main class="min-h-screen bg-base-200 px-4 py-10">
       <div class="mx-auto max-w-md">
         <header class="flex items-center justify-between mb-6">
-          <h1 class="text-xl font-semibold">Neuer Chirp</h1>
+          <h1 class="text-xl font-semibold">Bearbeiten</h1>
           <.link href={~p"/admin"} class="text-sm opacity-70 hover:opacity-100">← Admin</.link>
         </header>
 
@@ -108,7 +121,7 @@ defmodule ChirpWeb.NewTaskLive do
 
             <div class="flex items-center justify-between pt-2">
               <.link href={~p"/admin"} class="btn btn-ghost">Abbrechen</.link>
-              <button type="submit" class="btn btn-primary">Anlegen</button>
+              <button type="submit" class="btn btn-primary">Speichern</button>
             </div>
           </div>
         </form>

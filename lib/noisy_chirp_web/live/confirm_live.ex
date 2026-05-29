@@ -1,7 +1,8 @@
 defmodule ChirpWeb.ConfirmLive do
   @moduledoc """
   The page opened from the ntfy notification: one question, one checkbox,
-  one button. The entire app's UX hinges on this screen.
+  one button — plus two snooze shortcuts ("+1h", "Morgen früh") for when
+  the user genuinely can't deal with it right now.
   """
   use ChirpWeb, :live_view
 
@@ -13,13 +14,16 @@ defmodule ChirpWeb.ConfirmLive do
     case Reminders.get_task_by_token(token) do
       nil ->
         {:ok,
-         socket
-         |> assign(page_title: "nicht gefunden", task: nil, status: :not_found, checked: false)}
+         assign(socket,
+           page_title: "nicht gefunden",
+           task: nil,
+           status: :not_found,
+           checked: false
+         )}
 
       task ->
         {:ok,
-         socket
-         |> assign(
+         assign(socket,
            page_title: "Bestätigen",
            task: task,
            status: status_from_task(task),
@@ -49,8 +53,16 @@ defmodule ChirpWeb.ConfirmLive do
     end
   end
 
-  def handle_event("confirm", _params, socket) do
-    {:noreply, socket}
+  def handle_event("confirm", _params, socket), do: {:noreply, socket}
+
+  def handle_event("snooze", %{"amount" => "1h"}, socket) do
+    {:ok, updated} = Reminders.snooze_task(socket.assigns.task, 60 * 60)
+    {:noreply, assign(socket, task: updated, status: :snoozed, snoozed_to: updated.next_fire_at)}
+  end
+
+  def handle_event("snooze", %{"amount" => "tomorrow"}, socket) do
+    {:ok, updated} = Reminders.snooze_until_tomorrow(socket.assigns.task)
+    {:noreply, assign(socket, task: updated, status: :snoozed, snoozed_to: updated.next_fire_at)}
   end
 
   defp send_oath_notification(task) do
@@ -59,7 +71,7 @@ defmodule ChirpWeb.ConfirmLive do
 
     Notifier.publish(task.ntfy_topic,
       title: "Schwur erforderlich",
-      message: "Schwöre mir, dass du den #{task.name} wirklich #{task.verb} hast!!",
+      message: "Schwöre mir, dass du das wirklich erledigt hast: #{task.name}!!",
       priority: 5,
       tags: ["pray", "skull"],
       click: click
@@ -75,6 +87,7 @@ defmodule ChirpWeb.ConfirmLive do
         <.pending_card :if={@status == :pending} task={@task} checked={@checked} />
         <.awaiting :if={@status == :awaiting_oath} task={@task} />
         <.done :if={@status == :done} task={@task} />
+        <.snoozed :if={@status == :snoozed} task={@task} snoozed_to={@snoozed_to} />
       </div>
     </main>
     """
@@ -88,13 +101,11 @@ defmodule ChirpWeb.ConfirmLive do
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body items-center text-center gap-6 py-10">
         <span class="text-4xl">🐦</span>
-        <h1 class="text-2xl font-bold leading-tight">
-          Schon den<br />
-          <span class="text-primary">{@task.name}</span> <br />
-          {@task.verb}?
+        <h1 class="text-2xl font-bold leading-tight px-2">
+          {@task.name}?
         </h1>
 
-        <form phx-submit="confirm" class="w-full space-y-6">
+        <form phx-submit="confirm" class="w-full space-y-5">
           <label class="label cursor-pointer justify-center gap-3 text-base">
             <input
               type="checkbox"
@@ -103,7 +114,7 @@ defmodule ChirpWeb.ConfirmLive do
               checked={@checked}
               phx-click="toggle"
             />
-            <span>Ja, ist {@task.verb}.</span>
+            <span>Ja, erledigt.</span>
           </label>
 
           <button
@@ -114,6 +125,28 @@ defmodule ChirpWeb.ConfirmLive do
             Bestätigen
           </button>
         </form>
+
+        <div class="w-full pt-2">
+          <div class="text-xs opacity-60 mb-2">Gerade keine Zeit?</div>
+          <div class="flex gap-2 justify-center">
+            <button
+              type="button"
+              phx-click="snooze"
+              phx-value-amount="1h"
+              class="btn btn-ghost btn-sm"
+            >
+              +1 Stunde
+            </button>
+            <button
+              type="button"
+              phx-click="snooze"
+              phx-value-amount="tomorrow"
+              class="btn btn-ghost btn-sm"
+            >
+              Morgen früh
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     """
@@ -127,7 +160,22 @@ defmodule ChirpWeb.ConfirmLive do
       <div class="card-body items-center text-center gap-4 py-12">
         <span class="text-5xl">🤫</span>
         <h1 class="text-2xl font-bold">Erledigt.</h1>
-        <p class="opacity-80">Ruhe für ~{humanize_interval(@task.base_interval_seconds)}.</p>
+        <p class="opacity-80">Ruhe.</p>
+      </div>
+    </div>
+    """
+  end
+
+  attr :task, :map, required: true
+  attr :snoozed_to, :any, required: true
+
+  defp snoozed(assigns) do
+    ~H"""
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body items-center text-center gap-4 py-12">
+        <span class="text-5xl">💤</span>
+        <h1 class="text-2xl font-bold">Vertagt.</h1>
+        <p class="opacity-80">Ich melde mich {format_snooze(@snoozed_to)} wieder.</p>
       </div>
     </div>
     """
@@ -160,20 +208,16 @@ defmodule ChirpWeb.ConfirmLive do
     """
   end
 
-  defp humanize_interval(seconds) when seconds >= 86_400 * 30 do
-    months = div(seconds, 86_400 * 30)
-    "#{months} Monat#{if months == 1, do: "", else: "e"}"
+  defp format_snooze(%DateTime{} = dt) do
+    diff = DateTime.diff(dt, DateTime.utc_now(), :second)
+
+    cond do
+      diff < 60 -> "gleich"
+      diff < 3600 -> "in #{div(diff, 60)} Minuten"
+      diff < 86_400 -> "in #{div(diff, 3600)} Stunden"
+      true -> "morgen früh"
+    end
   end
 
-  defp humanize_interval(seconds) when seconds >= 86_400 do
-    "#{div(seconds, 86_400)} Tage"
-  end
-
-  defp humanize_interval(seconds) when seconds >= 3_600 do
-    "#{div(seconds, 3_600)} Stunden"
-  end
-
-  defp humanize_interval(seconds) do
-    "#{div(seconds, 60)} Minuten"
-  end
+  defp format_snooze(_), do: "bald"
 end
