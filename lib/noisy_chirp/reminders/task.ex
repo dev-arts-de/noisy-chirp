@@ -7,7 +7,7 @@ defmodule Chirp.Reminders.Task do
   schema "tasks" do
     field :token, :string
     field :name, :string
-    field :verb, :string
+    field :verb, :string, default: ""
     field :base_interval_seconds, :integer
     field :ntfy_topic, :string
     field :state, :string, default: "calm"
@@ -30,7 +30,7 @@ defmodule Chirp.Reminders.Task do
     task
     |> cast(attrs, @castable)
     |> ensure_token()
-    |> validate_required([:name, :verb, :base_interval_seconds, :ntfy_topic, :next_fire_at])
+    |> validate_required([:name, :base_interval_seconds, :ntfy_topic, :next_fire_at])
     |> validate_inclusion(:state, @states)
     |> validate_number(:base_interval_seconds, greater_than: 0)
     |> validate_number(:lie_score, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)

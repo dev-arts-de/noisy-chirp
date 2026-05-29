@@ -1,5 +1,8 @@
 import Config
 
+# Local admin password — override with ADMIN_PASSWORD env in prod.
+config :noisy_chirp, admin_password: "dev"
+
 # Configure your database
 config :noisy_chirp, Chirp.Repo,
   database: Path.expand("../noisy_chirp_dev.db", __DIR__),

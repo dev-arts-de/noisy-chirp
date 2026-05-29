@@ -51,27 +51,25 @@ defmodule Chirp.Engine.Escalation do
   def title(_), do: "noisy-chirp"
 
   @doc """
-  Renders the German escalation text. `name` and `verb` come from the task.
+  Renders the German escalation text. Takes the task's description (e.g.
+  "Zahnbürstenkopf wechseln") and the chirp count.
   """
-  def text(1, name, verb), do: "Nah? Schon den #{name} #{verb}?"
-  def text(2, name, _verb), do: "Ähm. Der #{name}. Du weißt schon."
-  def text(3, name, verb), do: "Ich frag jetzt zum dritten Mal. #{name}. #{verb}? 🙃"
-  def text(4, name, _verb), do: "DER #{name}. JETZT."
-  def text(5, name, _verb), do: "Ich höre nicht auf. Du weißt das, oder? #{name}. 🚨"
-
-  def text(n, name, _verb) when n >= 6 do
-    "chirp chirp chirp chirp #{name} chirp 💀"
-  end
+  def text(1, desc), do: "🐦 #{desc}?"
+  def text(2, desc), do: "Hey. #{desc}. Du weißt schon."
+  def text(3, desc), do: "Zum dritten Mal: #{desc}. 🙃"
+  def text(4, desc), do: "#{desc}. JETZT."
+  def text(5, desc), do: "Ich höre nicht auf. #{desc}. 🚨"
+  def text(n, desc) when n >= 6, do: "chirp chirp chirp #{desc} 💀"
 
   @doc """
   Bundles all dispatch fields for a given chirp count.
   """
-  def render(n, name, verb) do
+  def render(n, description) do
     %{
       priority: priority(n),
       tags: tags(n),
       title: title(n),
-      message: text(n, name, verb)
+      message: text(n, description)
     }
   end
 end

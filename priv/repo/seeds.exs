@@ -1,5 +1,4 @@
-# Script for populating the database. Idempotent: only inserts the default
-# Zahnbürstenkopf task when there is no task yet.
+# Idempotent seeds. Runs on container boot when SEED_ON_BOOT=true.
 #
 #     mix run priv/repo/seeds.exs
 
@@ -10,12 +9,10 @@ if Reminders.list_tasks() == [] do
 
   {:ok, _task} =
     Reminders.create_task(%{
-      name: "Zahnbürstenkopf",
-      verb: "gewechselt",
-      # ~60 Tage
-      base_interval_seconds: 5_184_000,
+      name: "Zahnbürstenkopf wechseln",
+      verb: "",
+      base_interval_seconds: 60 * 86_400,
       ntfy_topic: topic,
-      # erster Schuss in 1 min zum Testen
       next_fire_at:
         DateTime.utc_now()
         |> DateTime.add(60, :second)

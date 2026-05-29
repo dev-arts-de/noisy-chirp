@@ -47,9 +47,9 @@ defmodule Chirp.Engine.EscalationTest do
     end
   end
 
-  describe "render/3" do
+  describe "render/2" do
     test "produces a complete payload" do
-      r = Escalation.render(3, "Zahnbürstenkopf", "gewechselt")
+      r = Escalation.render(3, "Zahnbürstenkopf wechseln")
       assert r.priority == 5
       assert is_list(r.tags)
       assert is_binary(r.title)

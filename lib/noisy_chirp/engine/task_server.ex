@@ -97,7 +97,7 @@ defmodule Chirp.Engine.TaskServer do
   end
 
   defp dispatch(task, n) do
-    rendered = Escalation.render(n, task.name, task.verb)
+    rendered = Escalation.render(n, task.name)
 
     Notifier.publish(task.ntfy_topic,
       title: rendered.title,

@@ -26,7 +26,9 @@ config :noisy_chirp, ChirpWeb.Endpoint,
 config :noisy_chirp,
   ntfy_base_url: System.get_env("NTFY_BASE_URL", "https://ntfy.sh"),
   public_base_url: System.get_env("PUBLIC_BASE_URL", "http://localhost:4000"),
-  seed_on_boot: System.get_env("SEED_ON_BOOT", "false") in ~w(true 1 yes)
+  seed_on_boot: System.get_env("SEED_ON_BOOT", "false") in ~w(true 1 yes),
+  admin_password: System.get_env("ADMIN_PASSWORD") || "",
+  default_ntfy_topic: System.get_env("NTFY_TOPIC")
 
 if config_env() == :prod do
   database_path =
