@@ -100,7 +100,7 @@ defmodule ChirpWeb.ConfirmLive do
     ~H"""
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body items-center text-center gap-6 py-10">
-        <span class="text-4xl">🐦</span>
+        <img src={~p"/images/logo.png"} alt="" class="w-16" />
         <h1 class="text-2xl font-bold leading-tight px-2">
           {@task.name}?
         </h1>
@@ -158,7 +158,7 @@ defmodule ChirpWeb.ConfirmLive do
     ~H"""
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body items-center text-center gap-4 py-12">
-        <span class="text-5xl">🤫</span>
+        <.icon name="hero-check-circle" class="size-14 text-success" />
         <h1 class="text-2xl font-bold">Erledigt.</h1>
         <p class="opacity-80">Ruhe.</p>
       </div>
@@ -173,7 +173,7 @@ defmodule ChirpWeb.ConfirmLive do
     ~H"""
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body items-center text-center gap-4 py-12">
-        <span class="text-5xl">💤</span>
+        <.icon name="hero-moon" class="size-14 opacity-70" />
         <h1 class="text-2xl font-bold">Vertagt.</h1>
         <p class="opacity-80">Ich melde mich {format_snooze(@snoozed_to)} wieder.</p>
       </div>
@@ -187,7 +187,7 @@ defmodule ChirpWeb.ConfirmLive do
     ~H"""
     <div class="card bg-base-100 shadow-xl border border-error/40">
       <div class="card-body items-center text-center gap-4 py-10">
-        <span class="text-4xl">😬</span>
+        <.icon name="hero-exclamation-triangle" class="size-12 text-error" />
         <h1 class="text-xl font-bold">Schwur ausstehend.</h1>
         <p class="opacity-80">Du musst erst schwören.</p>
         <a class="btn btn-error btn-block" href={~p"/oath/#{@task.token}"}>Zum Schwur</a>
@@ -200,7 +200,7 @@ defmodule ChirpWeb.ConfirmLive do
     ~H"""
     <div class="card bg-base-100 shadow">
       <div class="card-body items-center text-center gap-2 py-12">
-        <span class="text-4xl">🤷</span>
+        <.icon name="hero-question-mark-circle" class="size-12 opacity-50" />
         <h1 class="text-xl font-bold">Token unbekannt.</h1>
         <p class="opacity-70">Vielleicht eine alte Notification?</p>
       </div>

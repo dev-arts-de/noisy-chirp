@@ -74,9 +74,10 @@ defmodule ChirpWeb.OathLive do
   defp pending(assigns) do
     ~H"""
     <div class="rounded-2xl border border-red-500/40 bg-black/40 backdrop-blur p-8 shadow-2xl text-center space-y-6">
-      <span class="text-5xl block">🩸</span>
+      <.icon name="hero-exclamation-triangle" class="size-12 text-red-400 mx-auto" />
       <h1 class="text-2xl font-bold leading-snug">
-        Schwöre mir,<br /> dass du das wirklich erledigt hast:<br />
+        Schwöre mir,<br />
+        dass du das wirklich erledigt hast:<br />
         <span class="text-red-300">{@task.name}</span>!!
       </h1>
 
@@ -89,7 +90,7 @@ defmodule ChirpWeb.OathLive do
             checked={@checked}
             phx-click="toggle"
           />
-          <span>Ich schwöre 🤚</span>
+          <span>Ich schwöre</span>
         </label>
 
         <button
@@ -107,7 +108,7 @@ defmodule ChirpWeb.OathLive do
   defp done(assigns) do
     ~H"""
     <div class="rounded-2xl border border-red-500/30 bg-black/40 p-10 text-center space-y-3">
-      <span class="text-5xl block">🕊️</span>
+      <.icon name="hero-check-badge" class="size-14 text-red-200 mx-auto" />
       <h1 class="text-2xl font-bold">Geschworen.</h1>
       <p class="opacity-80">Mögen die Götter dir glauben.</p>
     </div>

@@ -108,13 +108,15 @@ defmodule ChirpWeb.DashboardLive do
       </div>
 
       <div class="flex items-center gap-2">
-        <.link href={~p"/admin/new"} class="btn btn-primary btn-sm">+ Neu</.link>
+        <.link href={~p"/admin/new"} class="btn btn-primary btn-sm gap-1">
+          <.icon name="hero-plus" class="size-4" /> Neu
+        </.link>
         <.link
           href={~p"/logout"}
           method="delete"
-          class="btn btn-ghost btn-sm"
+          class="btn btn-ghost btn-sm gap-1"
         >
-          Logout
+          <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Logout
         </.link>
       </div>
     </header>
@@ -163,10 +165,10 @@ defmodule ChirpWeb.DashboardLive do
         <% else %>
           <.link
             href={~p"/admin/#{@task.id}/edit"}
-            class="btn btn-ghost btn-xs"
+            class="btn btn-ghost btn-square btn-sm"
             title="Bearbeiten"
           >
-            ✎
+            <.icon name="hero-pencil-square" class="size-4" />
           </.link>
 
           <%= if @task.active do %>
@@ -174,20 +176,20 @@ defmodule ChirpWeb.DashboardLive do
               type="button"
               phx-click="pause"
               phx-value-id={@task.id}
-              class="btn btn-ghost btn-xs"
+              class="btn btn-ghost btn-square btn-sm"
               title="Pausieren"
             >
-              ⏸
+              <.icon name="hero-pause" class="size-4" />
             </button>
           <% else %>
             <button
               type="button"
               phx-click="resume"
               phx-value-id={@task.id}
-              class="btn btn-ghost btn-xs"
+              class="btn btn-ghost btn-square btn-sm"
               title="Fortsetzen"
             >
-              ▶
+              <.icon name="hero-play" class="size-4" />
             </button>
           <% end %>
 
@@ -195,10 +197,10 @@ defmodule ChirpWeb.DashboardLive do
             type="button"
             phx-click="ask_delete"
             phx-value-id={@task.id}
-            class="btn btn-ghost btn-xs text-error/80"
+            class="btn btn-ghost btn-square btn-sm text-error/70 hover:text-error"
             title="Löschen"
           >
-            🗑
+            <.icon name="hero-trash" class="size-4" />
           </button>
         <% end %>
       </div>
